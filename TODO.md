@@ -1,0 +1,10 @@
+-[ ] Gaussian filter
+-[ ] Median filter
+-[ ] Truncated median
+-[ ] Hybrid median
+-[ ] Olympic filter
+-[ ] Ranking filter (grayscale morphological operations)
+-[ ] Top hat filter
+-[ ] Rolling ball filter
+-[ ] Kuwabara filter
+-[ ] Maximum likelihood filter

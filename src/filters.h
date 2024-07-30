@@ -2,9 +2,20 @@
 
 #include "defs.h"
 
+#include <optional>
+#include <string>
+
 #include "image.h"
 
 namespace vl::filters
 {
-	void gaussian_filter(Image &image, double standardDeviation, std::size_t kernelSize);
+	enum class Shape
+	{
+		Rectangle,
+		Octagon
+	};
+	std::optional<Shape> to_shape(const std::string &shapeString);
+
+	void gaussian(Image &image, double standardDeviation, std::size_t kernelSize);
+	void median(Image &image, std::size_t size, Shape shapeToUse=Shape::Rectangle);
 }

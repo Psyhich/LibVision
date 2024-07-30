@@ -6,10 +6,11 @@
 #include "filters.h"
 #include "image_io.h"
 
-std::vector<char *> create_args_from_unmatched(std::vector<std::string> &unmatched)
+std::vector<const char *> create_args_from_unmatched(std::vector<std::string> &unmatched)
 {
-	std::vector<char *> args;
-	args.reserve(unmatched.size());
+	std::vector<const char *> args;
+	args.reserve(unmatched.size() + 1);
+	args.push_back("./prog");
 	for (auto &str : unmatched)
 	{
 		args.push_back(str.data());
@@ -51,7 +52,28 @@ int main(int argc, char **argv)
 		const auto stdDev{result["std-dev"].as<double>()};
 		const auto size{result["size"].as<std::size_t>()};
 
-		vl::filters::gaussian_filter(image, stdDev, size);
+		vl::filters::gaussian(image, stdDev, size);
+	}
+	else if (filter == "median")
+	{
+		cxxopts::Options options{"Median filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+
+		const auto size{result["size"].as<std::size_t>()};
+		const auto shapeString{result["shape"].as<std::string>()};
+		const auto shape{vl::filters::to_shape(shapeString)};
+		if (!shape)
+		{
+			fmt::println("Invalid shape name: {}", shapeString);
+			return -1;
+		}
+
+		vl::filters::median(image, size);
 	}
 
 	const auto writeResult{vl::ImageIO::write_png(image, result["output"].as<std::string>())};

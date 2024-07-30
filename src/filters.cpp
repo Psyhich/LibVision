@@ -1,10 +1,12 @@
 #include "filters.h"
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <cmath>
-#include <vector>
+#include <numeric>
 #include <span>
+#include <vector>
+#include <ranges>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -146,19 +148,104 @@ namespace vl::filters
 
 		const vl::Image imageCopy{image};
 		std::vector<byte> values(valuesCount, 0);
-		for (ssize_t y = halfSize; y < effectiveHeight; ++y)
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
 		{
-			for (ssize_t x = halfSize; x < effectiveWidth; ++x)
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
 			{
 				std::size_t index{0};
-				for (ssize_t kernelY = 0; kernelY < size; ++kernelY)
-					for (ssize_t kernelX = 0; kernelX < size; ++kernelX)
+				for (std::size_t kernelY = 0; kernelY < size; ++kernelY)
+					for (std::size_t kernelX = 0; kernelX < size; ++kernelX)
 						if (mask[kernelY * size + kernelX])
 							values[index++] = imageCopy[x - halfSize + kernelX, y - halfSize + kernelY];
 				assert(index == values.size());
 
 				std::sort(begin(values), end(values));
 				image[x, y] = values[values.size() / 2 + 1];
+			}
+		}
+	}
+
+	void truncated_median(Image &image, std::size_t size, std::size_t stdDevCount, Shape shapeToUse)
+	{
+		if (size % 2 == 0)
+		{
+			fmt::println("Invalid size of median filter: {}, filter should have odd size", size);
+			return;
+		}
+		if (image.width <= size || image.height <= size)
+		{
+			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
+				image.width, image.height, size, size);
+			return;
+		}
+		if (image.format != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		std::vector<bool> mask;
+		switch (shapeToUse)
+		{
+			case Shape::Rectangle:
+				mask.resize(size * size, true);
+				break;
+			case Shape::Octagon:
+				mask = generate_octagon_mask(size);
+				break;
+		}
+		const std::size_t valuesCount = std::count(begin(mask), end(mask), true);
+
+		const std::size_t halfSize{size / 2};
+		const std::size_t effectiveWidth{image.width - halfSize};
+		const std::size_t effectiveHeight{image.height - halfSize};
+
+		const vl::Image imageCopy{image};
+		std::vector<byte> values(valuesCount, 0);
+		std::array<int, 256> frequencies{};
+
+		std::size_t index{0};
+		std::size_t mean{0};
+		std::size_t powMean{0};
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
+		{
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
+			{
+				index = 0;
+
+				for (std::size_t kernelY = 0; kernelY < size; ++kernelY)
+					for (std::size_t kernelX = 0; kernelX < size; ++kernelX)
+						if (mask[kernelY * size + kernelX])
+							values[index++] = imageCopy[x - halfSize + kernelX, y - halfSize + kernelY];
+
+				assert(index == values.size());
+
+				for (std::size_t i = 0; i < values.size(); ++i)
+					++frequencies[values[i]];
+
+				for (std::size_t i = 0; i < values.size(); ++i)
+				{
+					mean += frequencies[values[i]] / (double)values.size() * values[i];
+					powMean += std::pow(frequencies[values[i]] / (double)values.size() * values[i], 2);
+				}
+				mean /= values.size();
+				powMean /= values.size();
+				const double threshold{std::sqrt(powMean - mean * mean) * stdDevCount};
+
+				std::sort(begin(values), end(values));
+
+				auto acceptableStart{std::upper_bound(begin(values), end(values),
+					mean - threshold)
+				};
+				const auto acceptableEnd{std::lower_bound(begin(values), end(values),
+					mean + threshold)
+				};
+
+				if (acceptableStart == end(values))
+					acceptableStart = begin(values);
+
+				image[x, y] = *(acceptableStart + std::distance(acceptableStart, acceptableEnd) / 2 + 1);
+				std::memset(frequencies.data(), 0, frequencies.size());
 			}
 		}
 	}

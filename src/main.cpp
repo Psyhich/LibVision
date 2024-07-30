@@ -73,7 +73,35 @@ int main(int argc, char **argv)
 			return -1;
 		}
 
-		vl::filters::median(image, size);
+		vl::filters::median(image, size, *shape);
+	}
+	else if (filter == "truncated-median")
+	{
+		cxxopts::Options options{"Median filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("c,std-dev-count", "Count of standard eviation to accept", cxxopts::value<std::size_t>()->default_value("2"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+
+		const auto size{result["size"].as<std::size_t>()};
+		const auto stdDevCount{result["std-dev-count"].as<std::size_t>()};
+		const auto shapeString{result["shape"].as<std::string>()};
+		const auto shape{vl::filters::to_shape(shapeString)};
+		if (!shape)
+		{
+			fmt::println("Invalid shape name: {}", shapeString);
+			return -1;
+		}
+
+		vl::filters::truncated_median(image, size, stdDevCount, *shape);
+	}
+	else
+	{
+		fmt::println("Unrecognized option filter: {}", filter);
+		return -1;
 	}
 
 	const auto writeResult{vl::ImageIO::write_png(image, result["output"].as<std::string>())};

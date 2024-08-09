@@ -5,6 +5,7 @@
 
 #include "filters.h"
 #include "image_io.h"
+#include "math.h"
 
 std::vector<const char *> create_args_from_unmatched(std::vector<std::string> &unmatched)
 {
@@ -25,8 +26,9 @@ int main(int argc, char **argv)
 
 	options.add_options()
 		("i,input", "Input file", cxxopts::value<std::string>())
-		("f,filter", "Filter to use", cxxopts::value<std::string>())
-		("o,output", "Output file", cxxopts::value<std::string>());
+		("c,calc", "Calculation to use", cxxopts::value<std::string>()->default_value("none"))
+		("f,filter", "Filter to use", cxxopts::value<std::string>()->default_value("none"))
+		("o,output", "Output file", cxxopts::value<std::string>()->default_value("output.png"));
 	options.allow_unrecognised_options();
 	const auto result{options.parse(argc, argv)};
 	auto unmatched{result.unmatched()};
@@ -39,7 +41,17 @@ int main(int argc, char **argv)
 	}
 	auto &image{readImage.value()};
 
+	const auto calc{result["calc"].as<std::string>()};
+	if (calc == "entropy")
+	{
+		fmt::println("{} entropy level: {}", result["input"].as<std::string>(), vl::math::entropy(image));
+	}
+	else if (calc == "snr")
+	{
+		fmt::println("{} signal to noise ratio: {}", result["input"].as<std::string>(), vl::math::signal_to_noise_ratio(image));
+	}
 	const auto filter{result["filter"].as<std::string>()};
+	bool actionHappend = false;
 	if (filter == "gauss")
 	{
 		cxxopts::Options options{"Gauss filter"};
@@ -53,6 +65,7 @@ int main(int argc, char **argv)
 		const auto size{result["size"].as<std::size_t>()};
 
 		vl::filters::gaussian(image, stdDev, size);
+		actionHappend = true;
 	}
 	else if (filter == "median")
 	{
@@ -74,6 +87,7 @@ int main(int argc, char **argv)
 		}
 
 		vl::filters::median(image, size, *shape);
+		actionHappend = true;
 	}
 	else if (filter == "truncated-median")
 	{
@@ -97,6 +111,24 @@ int main(int argc, char **argv)
 		}
 
 		vl::filters::truncated_median(image, size, stdDevCount, *shape);
+		actionHappend = true;
+	}
+	else if (filter == "hybrid-median")
+	{
+		cxxopts::Options options{"Median filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("c,std-dev-count", "Count of standard eviation to accept", cxxopts::value<std::size_t>()->default_value("2"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const auto size{result["size"].as<std::size_t>()};
+		vl::filters::hybrid_median(image, size);
+		actionHappend = true;
+	}
+	else if (filter == "none")
+	{
 	}
 	else
 	{
@@ -104,11 +136,15 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	const auto writeResult{vl::ImageIO::write_png(image, result["output"].as<std::string>())};
-	if (!writeResult)
+	if (actionHappend)
 	{
-		fmt::println("Got error while writting: {}", writeResult.error().description);
-		return -1;
+		const auto writeResult{vl::ImageIO::write_png(image, result["output"].as<std::string>())};
+		if (!writeResult)
+		{
+			fmt::println("Got error while writting: {}", writeResult.error().description);
+			return -1;
+		}
 	}
+
 	return 0;
 }

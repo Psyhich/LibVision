@@ -4,9 +4,9 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
+#include <ranges>
 #include <span>
 #include <vector>
-#include <ranges>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -159,7 +159,7 @@ namespace vl::filters
 							values[index++] = imageCopy[x - halfSize + kernelX, y - halfSize + kernelY];
 				assert(index == values.size());
 
-				std::sort(begin(values), end(values));
+				std::ranges::sort(values);
 				image[x, y] = values[values.size() / 2 + 1];
 			}
 		}
@@ -169,7 +169,7 @@ namespace vl::filters
 	{
 		if (size % 2 == 0)
 		{
-			fmt::println("Invalid size of median filter: {}, filter should have odd size", size);
+			fmt::println("Invalid size of truncated median filter: {}, filter should have odd size", size);
 			return;
 		}
 		if (image.width <= size || image.height <= size)
@@ -232,7 +232,7 @@ namespace vl::filters
 				powMean /= values.size();
 				const double threshold{std::sqrt(powMean - mean * mean) * stdDevCount};
 
-				std::sort(begin(values), end(values));
+				std::ranges::sort(values);
 
 				auto acceptableStart{std::upper_bound(begin(values), end(values),
 					mean - threshold)
@@ -246,6 +246,63 @@ namespace vl::filters
 
 				image[x, y] = *(acceptableStart + std::distance(acceptableStart, acceptableEnd) / 2 + 1);
 				std::memset(frequencies.data(), 0, frequencies.size());
+			}
+		}
+	}
+
+	void hybrid_median(Image &image, std::size_t size)
+	{
+		if (size % 2 == 0)
+		{
+			fmt::println("Invalid size of hybrid median filter: {}, filter should have odd size", size);
+			return;
+		}
+		if (image.width <= size || image.height <= size)
+		{
+			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
+				image.width, image.height, size, size);
+			return;
+		}
+		if (image.format != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		const std::size_t halfSize{size / 2};
+		const std::size_t effectiveWidth{image.width - halfSize};
+		const std::size_t effectiveHeight{image.height - halfSize};
+
+
+		const Image copy{image};
+		std::vector<byte> pixelsToCheck(size * 2 - 1);
+		std::array<byte, 3> medians;
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
+		{
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
+			{
+				for (std::size_t i = 0; i < size; ++i)
+				{
+					pixelsToCheck[i] = copy[x - halfSize + i, y - halfSize + i];
+					if (i != halfSize + 1)
+						pixelsToCheck[size + i - (i > halfSize + 1)] = copy[x + halfSize - i, y + halfSize - i];
+				}
+				std::ranges::sort(pixelsToCheck);
+
+				medians[0] = pixelsToCheck[pixelsToCheck.size() / 2 + 1];
+				medians[1] = copy[x, y];
+
+				for (std::size_t i = 0; i < size; ++i)
+				{
+					pixelsToCheck[i] = copy[x, y - halfSize + i];
+					if (i != halfSize + 1)
+						pixelsToCheck[size + i - (i > halfSize + 1)] = copy[x + halfSize - i, y];
+				}
+				std::ranges::sort(pixelsToCheck);
+				medians[2] = pixelsToCheck[pixelsToCheck.size() / 2 + 1];
+
+				std::ranges::sort(medians);
+				image[x, y] = medians[1];
 			}
 		}
 	}

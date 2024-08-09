@@ -30,6 +30,7 @@ add_library(vision
 	src/filters.cpp
 	src/image.cpp
 	src/image_io.cpp
+	src/math.cpp
 )
 target_link_libraries(vision
 	PRIVATE

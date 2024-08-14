@@ -4,8 +4,7 @@
 - [x] Truncated median
 - [x] Hybrid median
 
-- [ ] Ranking filter (grayscale morphological operations)
-- [ ] Top hat filter
+- [x] Top hat filter
 - [ ] Rolling ball filter
 - [ ] Kuwabara filter
 - [ ] Maximum likelihood filter

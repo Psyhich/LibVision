@@ -3,36 +3,11 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <numeric>
-#include <ranges>
 #include <span>
 #include <vector>
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-
-std::vector<bool> generate_octagon_mask(std::size_t size)
-{
-	const std::size_t emptinessSizeSize = std::round(size / 3.);
-	assert(emptinessSizeSize * 2 < size);
-
-	const std::size_t sideSize = size - emptinessSizeSize * 2;
-
-	const std::size_t remainingEmptinessIndex{size - emptinessSizeSize - 1};
-	std::vector<bool> mask(size * size);
-	for (std::size_t y = 0; y < size; ++y)
-	{
-		for (std::size_t x = 0; x < size; ++x)
-		{
-			mask[y * size + x] = (x < emptinessSizeSize && y < (emptinessSizeSize - x))
-				|| (x >= remainingEmptinessIndex && y < x - remainingEmptinessIndex)
-				|| (x < emptinessSizeSize && y > (remainingEmptinessIndex + x))
-				|| (x >= remainingEmptinessIndex && y > (size - (x - remainingEmptinessIndex) - 1));
-		}
-	}
-
-	return mask;
-}
 
 namespace vl::filters
 {
@@ -43,13 +18,11 @@ namespace vl::filters
 			begin(shapeStringLowCase), tolower);
 
 		if (shapeStringLowCase == "rectangle")
-		{
 			return Shape::Rectangle;
-		}
 		else if (shapeStringLowCase == "octagon")
-		{
 			return Shape::Octagon;
-		}
+		else if (shapeStringLowCase == "circle")
+			return Shape::Octagon;
 
 		return {};
 	}
@@ -129,18 +102,8 @@ namespace vl::filters
 			return;
 		}
 
-		std::vector<bool> mask;
-		switch (shapeToUse)
-		{
-			case Shape::Rectangle:
-				mask.resize(size * size, true);
-				break;
-			case Shape::Octagon:
-				mask = generate_octagon_mask(size);
-				break;
-		}
-		const std::size_t valuesCount = std::count(begin(mask), end(mask), true);
-
+		const std::vector<bool> mask{impl::create_mask(size, shapeToUse)};
+		const std::size_t valuesCount = impl::get_mask_pixels_count(mask);
 
 		const std::size_t halfSize{size / 2};
 		const std::size_t effectiveWidth{image.width - halfSize};
@@ -191,7 +154,7 @@ namespace vl::filters
 				mask.resize(size * size, true);
 				break;
 			case Shape::Octagon:
-				mask = generate_octagon_mask(size);
+				mask = impl::generate_octagon_mask(size);
 				break;
 		}
 		const std::size_t valuesCount = std::count(begin(mask), end(mask), true);
@@ -304,6 +267,143 @@ namespace vl::filters
 				std::ranges::sort(medians);
 				image[x, y] = medians[1];
 			}
+		}
+	}
+
+	void erosion(Image &image, Shape shape, std::size_t size)
+	{
+		if (size % 2 == 0)
+		{
+			fmt::println("Invalid size of erosion filter: {}, filter should have odd size", size);
+			return;
+		}
+		if (image.width <= size || image.height <= size)
+		{
+			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
+				image.width, image.height, size, size);
+			return;
+		}
+		if (image.format != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		const std::size_t halfSize{size / 2};
+		const std::size_t effectiveWidth{image.width - halfSize};
+		const std::size_t effectiveHeight{image.height - halfSize};
+
+		const auto mask{impl::create_mask(size, shape)};
+		const Image copy{image};
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
+		{
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
+			{
+				byte min = copy[x, y];
+				for (std::size_t i = 0; i < size; ++i)
+					for (std::size_t j = 0; j < size; ++j)
+						if (mask[i * size + j])
+							min = std::min(copy[x - halfSize + i, y - halfSize + j], min);
+
+				image[x, y] = min;
+			}
+		}
+	}
+
+	void dilation(Image &image, Shape shape, std::size_t size)
+	{
+		if (size % 2 == 0)
+		{
+			fmt::println("Invalid size of dilation filter: {}, filter should have odd size", size);
+			return;
+		}
+		if (image.width <= size || image.height <= size)
+		{
+			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
+				image.width, image.height, size, size);
+			return;
+		}
+		if (image.format != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		const std::size_t halfSize{size / 2};
+		const std::size_t effectiveWidth{image.width - halfSize};
+		const std::size_t effectiveHeight{image.height - halfSize};
+
+		const auto mask{impl::create_mask(size, shape)};
+		const Image copy{image};
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
+		{
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
+			{
+				byte max = copy[x, y];
+				for (std::size_t i = 0; i < size; ++i)
+					for (std::size_t j = 0; j < size; ++j)
+						if (mask[i * size + j])
+							max = std::max(copy[x - halfSize + i, y - halfSize + j], max);
+
+				image[x, y] = max;
+			}
+		}
+	}
+
+	namespace impl
+	{
+		std::vector<bool> create_mask(std::size_t size, Shape shape)
+		{
+			switch (shape)
+			{
+				case Shape::Rectangle:
+					return std::vector<bool>(size, true);
+				case Shape::Circle:
+					return impl::generate_circle_mask(size);
+				case Shape::Octagon:
+					return generate_octagon_mask(size);
+			}
+			return {};
+		}
+
+		std::size_t get_mask_pixels_count(const std::vector<bool> &mask)
+		{
+			return std::ranges::count(mask, true);
+		}
+
+		std::vector<bool> generate_octagon_mask(std::size_t size)
+		{
+			const std::size_t emptinessSizeSize = std::round(size / 3.);
+			assert(emptinessSizeSize * 2 < size);
+
+			const std::size_t sideSize = size - emptinessSizeSize * 2;
+
+			const std::size_t remainingEmptinessIndex{size - emptinessSizeSize - 1};
+			std::vector<bool> mask(size * size);
+			for (std::size_t y = 0; y < size; ++y)
+			{
+				for (std::size_t x = 0; x < size; ++x)
+				{
+					mask[y * size + x] = (x < emptinessSizeSize && y < (emptinessSizeSize - x))
+						|| (x >= remainingEmptinessIndex && y < x - remainingEmptinessIndex)
+						|| (x < emptinessSizeSize && y > (remainingEmptinessIndex + x))
+						|| (x >= remainingEmptinessIndex && y > (size - (x - remainingEmptinessIndex) - 1));
+				}
+			}
+
+			return mask;
+		}
+
+		std::vector<bool> generate_circle_mask(std::size_t size)
+		{
+			std::vector<bool> mask(size * size);
+
+			const std::size_t halfSize = size / 2;
+			for (std::size_t i = 0; i < size; ++i)
+				for (std::size_t j = 0; j < size; ++j)
+					mask[i * size + j] = halfSize >= (std::size_t)std::sqrt(std::pow((i - halfSize), 2) + std::pow((j - halfSize), 2));
+
+			return mask;
 		}
 	}
 }

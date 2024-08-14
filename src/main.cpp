@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	}
 	else if (filter == "truncated-median")
 	{
-		cxxopts::Options options{"Median filter"};
+		cxxopts::Options options{"Truncated median filter"};
 		options.add_options()
 			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
 			("c,std-dev-count", "Count of standard eviation to accept", cxxopts::value<std::size_t>()->default_value("2"))
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 	}
 	else if (filter == "hybrid-median")
 	{
-		cxxopts::Options options{"Median filter"};
+		cxxopts::Options options{"Hybird median filter"};
 		options.add_options()
 			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
 			("c,std-dev-count", "Count of standard eviation to accept", cxxopts::value<std::size_t>()->default_value("2"))
@@ -125,6 +125,57 @@ int main(int argc, char **argv)
 
 		const auto size{result["size"].as<std::size_t>()};
 		vl::filters::hybrid_median(image, size);
+		actionHappend = true;
+	}
+	else if (filter == "erosion")
+	{
+		cxxopts::Options options{"Erosion filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const auto size{result["size"].as<std::size_t>()};
+		const auto shapeString{result["shape"].as<std::string>()};
+		const vl::filters::Shape shape{*vl::filters::to_shape(shapeString)};
+		vl::filters::erosion(image, shape, size);
+		actionHappend = true;
+	}
+	else if (filter == "dilation")
+	{
+		cxxopts::Options options{"Dilation filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const auto size{result["size"].as<std::size_t>()};
+		const auto shapeString{result["shape"].as<std::string>()};
+		const vl::filters::Shape shape{*vl::filters::to_shape(shapeString)};
+		vl::filters::dilation(image, shape, size);
+		actionHappend = true;
+	}
+	else if (filter == "top-hat")
+	{
+		cxxopts::Options options{"Top hat filter"};
+		options.add_options()
+			("s,size", "Kernel size", cxxopts::value<std::size_t>()->default_value("3"))
+			("S,shape", "Filter shape", cxxopts::value<std::string>()->default_value("rectangle"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const auto size{result["size"].as<std::size_t>()};
+		const auto shapeString{result["shape"].as<std::string>()};
+		const vl::filters::Shape shape{*vl::filters::to_shape(shapeString)};
+		vl::Image copy{image};
+		vl::filters::erosion(copy, shape, size);
+		vl::filters::dilation(copy, shape, size);
+
+		for (std::size_t y = 0; y < copy.height; ++y)
+			for (std::size_t x = 0; x < copy.width; ++x)
+				image[x, y] = std::max((int)image[x, y] - copy[x, y], 0);
 		actionHappend = true;
 	}
 	else if (filter == "none")

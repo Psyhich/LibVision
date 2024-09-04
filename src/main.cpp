@@ -6,6 +6,7 @@
 #include "filters.h"
 #include "image_io.h"
 #include "math.h"
+#include "segmentation.h"
 
 std::vector<const char *> create_args_from_unmatched(std::vector<std::string> &unmatched)
 {
@@ -13,9 +14,7 @@ std::vector<const char *> create_args_from_unmatched(std::vector<std::string> &u
 	args.reserve(unmatched.size() + 1);
 	args.push_back("./prog");
 	for (auto &str : unmatched)
-	{
 		args.push_back(str.data());
-	}
 
 	return args;
 }
@@ -176,6 +175,26 @@ int main(int argc, char **argv)
 		for (std::size_t y = 0; y < copy.height; ++y)
 			for (std::size_t x = 0; x < copy.width; ++x)
 				image[x, y] = std::max((int)image[x, y] - copy[x, y], 0);
+		actionHappend = true;
+	}
+	else if (filter == "segment")
+	{
+		const auto params{vl::compute_sector_parameters(image)};
+		const std::size_t sector_height{image.height / params.rows()};
+		const std::size_t sector_width{image.width / params.cols()};
+
+		for (std::size_t sector_row = 0; sector_row < params.rows(); ++sector_row)
+		{
+			const std::size_t sector_y_start{sector_row * sector_height};
+			for (std::size_t sector_col = 0; sector_col < params.cols(); ++sector_col)
+			{
+				const std::size_t sector_x_start{sector_col * sector_width};
+				for (std::size_t row = 0; row < sector_height; ++row)
+					for (std::size_t col = 0; col < sector_width; ++col)
+						image[sector_x_start + col, sector_y_start + row] = std::min(params[sector_row, sector_col].angular_second_moment * 255000., 255.);
+			}
+		}
+
 		actionHappend = true;
 	}
 	else if (filter == "none")

@@ -27,5 +27,5 @@ namespace vl::ImageIO
 	};
 
 	std::expected<vl::Image, ReadError> read_png(const std::string &path);
-	std::expected<void, WriteError> write_png(const vl::Image &imageToWrite, const std::string &path);
+	std::expected<void, WriteError> write_png(const vl::Image &image_to_write, const std::string &path);
 }

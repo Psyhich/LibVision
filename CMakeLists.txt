@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.29)
 
 project(LibVision)
 
+option(USE_ARCH_OPTIMIZATION "Use current hardware optimiztions" OFF)
+
 include(cmake/CPM.cmake)
 
 include(cmake/AutoCCache.cmake)
@@ -31,6 +33,8 @@ add_library(vision
 	src/image.cpp
 	src/image_io.cpp
 	src/math.cpp
+	src/segmentation.cpp
+	src/operations.cpp
 )
 target_link_libraries(vision
 	PRIVATE
@@ -44,6 +48,12 @@ target_compile_definitions(vision
 set_property(TARGET vision
 	PROPERTY CXX_STANDARD 23
 )
+if (USE_ARCH_OPTIMIZATION)
+	target_compile_options(vision
+		PRIVATE
+			-march=native
+	)
+endif()
 
 add_executable(vision_tool
 	src/main.cpp

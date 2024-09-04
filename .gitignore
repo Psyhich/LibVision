@@ -1,4 +1,5 @@
 # Build directories and binary files
+images/
 build*/
 out/
 cmake-build-*/

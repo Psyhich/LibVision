@@ -2,6 +2,9 @@
 
 #include "defs.h"
 
+#include <cmath>
+#include <numeric>
+
 #include "image.h"
 
 namespace vl::math
@@ -34,7 +37,7 @@ namespace vl::math
 			return m_cols;
 		}
 
-		inline T operator[](std::size_t row, std::size_t col) const
+		inline const T &operator[](std::size_t row, std::size_t col) const
 		{
 			return m_data[row * m_cols + col];
 		}
@@ -49,12 +52,22 @@ namespace vl::math
 			return m_data.data();
 		}
 
+		inline const T *begin() const
+		{
+			return m_data.data();
+		}
+
 		inline const T *cbegin() const
 		{
 			return m_data.data();
 		}
 
 		inline T *end()
+		{
+			return m_data.data() + m_data.size();
+		}
+
+		inline const T *end() const
 		{
 			return m_data.data() + m_data.size();
 		}
@@ -72,4 +85,23 @@ namespace vl::math
 
 	double entropy(const Image &image);
 	double signal_to_noise_ratio(const Image &image);
+
+	template<typename Iter>
+	std::pair<double, double> get_mean_std_dev(Iter begin, Iter end)
+	{
+		const std::size_t count{std::distance(begin, end)};
+		const double mean = (double)std::accumulate(begin, end, 0) / count;
+
+		double std_dev{0};
+		for (auto it = begin; it != end; ++it)
+			std_dev += std::pow((double) *it - mean, 2.);
+		std_dev = std::sqrt(std_dev / count);
+
+		return {mean, std_dev};
+	}
+	template<typename ContainerT>
+	inline std::pair<double, double> get_mean_std_dev(const ContainerT &container)
+	{
+		return get_mean_std_dev(container.cbegin(), container.cend());
+	}
 };

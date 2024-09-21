@@ -30,7 +30,7 @@ namespace vl
 	}
 
 	Image::Image(std::size_t _width, std::size_t _height, PixelFormat _format)
-		: m_rawBytes(_width * _height)
+		: m_rawBytes(_width * _height, 0)
 		, width{_width}
 		, height{_height}
 		, format{_format}

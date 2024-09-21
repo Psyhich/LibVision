@@ -145,7 +145,7 @@ namespace vl::ImageIO
 
 		png_read_image(infoStructPair.png_ptr, rows.data());
 
-		return vl::Image{bytes, width, height, PixelFormat::Grayscale8};
+		return vl::Image{std::move(bytes), width, height, PixelFormat::Grayscale8};
 	}
 
 	std::expected<void, WriteError> write_png(const Image &image, const std::string &path)

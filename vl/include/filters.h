@@ -26,8 +26,6 @@ namespace vl::filters
 	void erosion(Image &image, Shape shape, std::size_t size);
 	void dilation(Image &image, Shape shape, std::size_t size);
 
-	void top_hat(Image &image);
-
 	namespace impl
 	{
 		std::vector<bool> create_mask(std::size_t size, Shape shape);

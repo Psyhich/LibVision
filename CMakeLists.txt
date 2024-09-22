@@ -11,6 +11,12 @@ endif()
 option(USE_ARCH_OPTIMIZATION "Use current hardware optimiztions" OFF)
 option(BUILD_BINDINGS "Build python bindings" OFF)
 option(BUILD_TOOLS "Build lib vision tools" ${MAIN_PROJECT})
+option(USE_SANITIZER "Use address sanitizer" OFF)
+
+if (USE_SANITIZER)
+	add_compile_options(-fsanitize=address)
+	add_link_options(-fsanitize=address)
+endif()
 
 if (BUILD_BINDINGS)
 	set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)

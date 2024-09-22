@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 		fmt::println("{} signal to noise ratio: {}", result["input"].as<std::string>(), vl::math::signal_to_noise_ratio(image));
 	}
 	const auto filter{result["filter"].as<std::string>()};
-	bool actionHappend = false;
+	bool actionHappend = true;
 	if (filter == "gauss")
 	{
 		cxxopts::Options options{"Gauss filter"};
@@ -82,7 +82,6 @@ int main(int argc, char **argv)
 		const auto size{result["size"].as<std::size_t>()};
 
 		vl::filters::gaussian(image, stdDev, size);
-		actionHappend = true;
 	}
 	else if (filter == "median")
 	{
@@ -104,7 +103,6 @@ int main(int argc, char **argv)
 		}
 
 		vl::filters::median(image, size, *shape);
-		actionHappend = true;
 	}
 	else if (filter == "truncated-median")
 	{
@@ -128,7 +126,6 @@ int main(int argc, char **argv)
 		}
 
 		vl::filters::truncated_median(image, size, stdDevCount, *shape);
-		actionHappend = true;
 	}
 	else if (filter == "hybrid-median")
 	{
@@ -142,7 +139,6 @@ int main(int argc, char **argv)
 
 		const auto size{result["size"].as<std::size_t>()};
 		vl::filters::hybrid_median(image, size);
-		actionHappend = true;
 	}
 	else if (filter == "erosion")
 	{
@@ -157,7 +153,6 @@ int main(int argc, char **argv)
 		const auto shapeString{result["shape"].as<std::string>()};
 		const vl::filters::Shape shape{*vl::filters::to_shape(shapeString)};
 		vl::filters::erosion(image, shape, size);
-		actionHappend = true;
 	}
 	else if (filter == "dilation")
 	{
@@ -172,10 +167,28 @@ int main(int argc, char **argv)
 		const auto shapeString{result["shape"].as<std::string>()};
 		const vl::filters::Shape shape{*vl::filters::to_shape(shapeString)};
 		vl::filters::dilation(image, shape, size);
-		actionHappend = true;
+	}
+	else if (filter == "top-hat")
+	{
+		cxxopts::Options options{"Dilation filter"};
+		options.add_options()
+			("I,inner-radius", "Inner cirlce radius", cxxopts::value<int>()->default_value("3"))
+			("O,outter-radius", "Outter cirlce radius", cxxopts::value<int>()->default_value("5"))
+			("T,threshold", "Threshold", cxxopts::value<std::size_t>()->default_value("10"))
+			("D,dark", "Fill with dark", cxxopts::value<int>()->default_value("1"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const int inner_radius{result["inner-radius"].as<int>()};
+		const int outter_radius{result["outter-radius"].as<int>()};
+		const std::size_t threshold{result["threshold"].as<std::size_t>()};
+		const int dark{result["dark"].as<int>()};
+
+		vl::filters::top_hat(image, inner_radius, outter_radius, threshold, dark);
 	}
 	else if (filter == "none")
 	{
+		actionHappend = false;
 	}
 	else
 	{

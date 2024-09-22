@@ -350,6 +350,63 @@ namespace vl::filters
 		}
 	}
 
+	void top_hat(Image &image, int innerRadius, int outterRadius, std::size_t threshold, bool dark)
+	{
+		if (innerRadius % 2 == 0)
+		{
+			fmt::println("Invalid inner radius of top-hat filter: {}, filter should have odd size", innerRadius);
+			return;
+		}
+		if (outterRadius % 2 == 0)
+		{
+			fmt::println("Outter inner radius of top-hat filter: {}, filter should have odd size", outterRadius);
+			return;
+		}
+
+		if (image.width <= outterRadius || image.height <= outterRadius)
+		{
+			fmt::println("Invalid image size: {}x{} to outter size: {}",
+				image.width, image.height, outterRadius);
+			return;
+		}
+		if (image.format != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		const int regionSize{outterRadius * 2};
+		const int halfSize{outterRadius};
+		const int powInnerRadius{innerRadius * innerRadius};
+		const std::size_t effectiveWidth{image.width - halfSize};
+		const std::size_t effectiveHeight{image.height - halfSize};
+
+		byte innerMax{};
+		byte outterMax{};
+		const Image copy{image};
+		for (std::size_t row = halfSize; row < effectiveHeight; ++row)
+		{
+			for (std::size_t col = halfSize; col < effectiveWidth; ++col)
+			{
+				innerMax = 0;
+				outterMax = 0;
+				for (std::size_t regionRow = 0; regionRow < regionSize; ++regionRow)
+				{
+					for (std::size_t regionCol = 0; regionCol < regionSize; ++regionCol)
+					{
+						if (std::pow(halfSize - regionRow, 2) + std::pow(halfSize - regionCol, 2) < powInnerRadius)
+							innerMax = std::max(copy[col - halfSize + regionCol, row - halfSize + regionRow], innerMax);
+						else
+							outterMax = std::max(copy[col - halfSize + regionCol, row - halfSize + regionRow], outterMax);
+					}
+				}
+
+				if ((std::size_t)innerMax < (std::size_t)outterMax + threshold)
+					image[col, row] = (byte)!dark * 254;
+			}
+		}
+	}
+
 	namespace impl
 	{
 		std::vector<bool> create_mask(std::size_t size, Shape shape)

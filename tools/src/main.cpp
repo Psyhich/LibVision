@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 	}
 	else if (filter == "top-hat")
 	{
-		cxxopts::Options options{"Dilation filter"};
+		cxxopts::Options options{"Top hat filter"};
 		options.add_options()
 			("I,inner-radius", "Inner cirlce radius", cxxopts::value<int>()->default_value("3"))
 			("O,outter-radius", "Outter cirlce radius", cxxopts::value<int>()->default_value("5"))
@@ -185,6 +185,24 @@ int main(int argc, char **argv)
 		const int dark{result["dark"].as<int>()};
 
 		vl::filters::top_hat(image, inner_radius, outter_radius, threshold, dark);
+	}
+	else if (filter == "rolling-ball")
+	{
+		cxxopts::Options options{"Rolling ball filter"};
+		options.add_options()
+			("I,inner-radius", "Inner cirlce radius", cxxopts::value<int>()->default_value("3"))
+			("O,outter-radius", "Outter cirlce radius", cxxopts::value<int>()->default_value("5"))
+			("T,threshold", "Threshold", cxxopts::value<std::size_t>()->default_value("10"))
+			("D,dark", "Fill with dark", cxxopts::value<int>()->default_value("1"));
+		const auto args{create_args_from_unmatched(unmatched)};
+		const auto result{options.parse(args.size(), args.data())};
+
+		const int inner_radius{result["inner-radius"].as<int>()};
+		const int outter_radius{result["outter-radius"].as<int>()};
+		const std::size_t threshold{result["threshold"].as<std::size_t>()};
+		const int dark{result["dark"].as<int>()};
+
+		vl::filters::rolling_ball(image, inner_radius, outter_radius, threshold, dark);
 	}
 	else if (filter == "none")
 	{

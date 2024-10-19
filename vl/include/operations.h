@@ -20,14 +20,14 @@ namespace vl
 	{
 		inline void check_for_operation(const vl::Image &lImage, const vl::Image &rImage)
 		{
-			if (lImage.width != rImage.width
-				|| lImage.height != rImage.height)
+			if (lImage.width() != rImage.width()
+				|| lImage.height() != rImage.height())
 				throw std::out_of_range{fmt::format("Wrong image size: {}x{} to {}x{}",
-					lImage.width, lImage.height, rImage.width, rImage.height)};
+					lImage.width(), lImage.height(), rImage.width(), rImage.height())};
 
-			if (lImage.format != rImage.format)
+			if (lImage.format() != rImage.format())
 				throw std::logic_error{fmt::format("Wrong image formats specified: {} to {}",
-					static_cast<int>(lImage.format), static_cast<int>(rImage.format))};
+					static_cast<int>(lImage.format()), static_cast<int>(rImage.format()))};
 		}
 	}
 }

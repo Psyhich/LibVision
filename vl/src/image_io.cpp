@@ -182,7 +182,7 @@ namespace vl::ImageIO
 		png_set_IHDR(
 			infoStructPair.png_ptr,
 			infoStructPair.info_ptr,
-			image.width, image.height,
+			image.width(), image.height(),
 			8,
 			PNG_COLOR_TYPE_GRAY,
 			PNG_INTERLACE_NONE,
@@ -191,8 +191,8 @@ namespace vl::ImageIO
 		);
 		png_write_info(infoStructPair.png_ptr, infoStructPair.info_ptr);
 
-		std::vector<const byte *> rows(image.height);
-		for (std::size_t i = 0; i < image.height; ++i)
+		std::vector<const byte *> rows(image.height());
+		for (std::size_t i = 0; i < image.height(); ++i)
 			rows[i] = &image[0, i];
 
 		png_write_image(infoStructPair.png_ptr, const_cast<byte **>(rows.data()));

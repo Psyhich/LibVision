@@ -6,17 +6,17 @@ namespace vl::math
 {
 	double entropy(const Image &image)
 	{
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Non grayscale formats are not supported");
 			return 0;
 		}
 		std::array<std::size_t, 256> frequencies{};
-		for (std::size_t y = 0; y < image.height; ++y)
-			for (std::size_t x = 0; x < image.width; ++x)
-				++frequencies[image[x, y]];
+		for (const auto val : image)
+			++frequencies[val];
+
 		double entropy{0};
-		const double size = image.width * image.height; 
+		const double size = image.width() * image.height(); 
 		for (std::size_t i = 0; i < frequencies.size(); ++i)
 		{
 			if (frequencies[i] == 0) continue;
@@ -30,18 +30,17 @@ namespace vl::math
 
 	double signal_to_noise_ratio(const Image &image)
 	{
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Non grayscale formats are not supported");
 			return 0;
 		}
 		std::array<std::size_t, 256> frequencies{};
-		for (std::size_t y = 0; y < image.height; ++y)
-			for (std::size_t x = 0; x < image.width; ++x)
-				++frequencies[image[x, y]];
+		for (const auto val : image)
+			++frequencies[val];
 
 		std::array<double, 256> possibilities{};
-		const double pixelsCount = image.width * image.height; 
+		const double pixelsCount = image.width() * image.height(); 
 		for (std::size_t i = 0; i < possibilities.size(); ++i)
 		{
 			if (frequencies[i] == 0) continue;

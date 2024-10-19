@@ -1,12 +1,4 @@
-CPMAddPackage(
-	NAME libpng
-	GITHUB_REPOSITORY pnggroup/libpng
-	VERSION 1.6.43
-	OPTIONS
-		"PNG_SHARED OFF"
-		"PNG_TESTS OFF"
-		"PNG_TOOLS OFF"
-)
+find_package(PNG REQUIRED)
 
 add_library(vision
 	src/filters.cpp
@@ -21,7 +13,7 @@ target_include_directories(vision
 )
 target_link_libraries(vision
 	PRIVATE
-		png_static
+		PNG::PNG
 	PUBLIC
 		fmt
 )

@@ -15,25 +15,25 @@ namespace vl
 
 	Image::Image(const std::span<byte> &bytes, std::size_t _width, std::size_t _height, PixelFormat _format)
 		: m_rawBytes{bytes.begin(), bytes.end()}
-		, width{_width}
-		, height{_height}
-		, format{_format}
+		, m_width{_width}
+		, m_height{_height}
+		, m_format{_format}
 	{
 	}
 
 	Image::Image(std::vector<byte> &&bytes, std::size_t _width, std::size_t _height, PixelFormat _format)
 		: m_rawBytes{std::move(bytes)}
-		, width{_width}
-		, height{_height}
-		, format{_format}
+		, m_width{_width}
+		, m_height{_height}
+		, m_format{_format}
 	{
 	}
 
 	Image::Image(std::size_t _width, std::size_t _height, PixelFormat _format)
 		: m_rawBytes(_width * _height, 0)
-		, width{_width}
-		, height{_height}
-		, format{_format}
+		, m_width{_width}
+		, m_height{_height}
+		, m_format{_format}
 	{
 	}
 }

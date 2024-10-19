@@ -22,7 +22,7 @@ namespace vl::filters
 		else if (shapeStringLowCase == "octagon")
 			return Shape::Octagon;
 		else if (shapeStringLowCase == "circle")
-			return Shape::Octagon;
+			return Shape::Circle;
 
 		return {};
 	}
@@ -35,13 +35,13 @@ namespace vl::filters
 				kernelSize);
 			return;
 		}
-		if (image.width <= kernelSize || image.height <= kernelSize)
+		if (image.width() <= kernelSize || image.height() <= kernelSize)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, kernelSize, kernelSize);
+				image.width(), image.height(), kernelSize, kernelSize);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
@@ -67,8 +67,8 @@ namespace vl::filters
 
 		const Image imageCopy{image};
 
-		const std::size_t effectiveWidth{image.width - halfKernel};
-		const std::size_t effectiveHeight{image.height - halfKernel};
+		const std::size_t effectiveWidth{image.width() - halfKernel};
+		const std::size_t effectiveHeight{image.height() - halfKernel};
 		for (std::size_t y = halfKernel; y < effectiveHeight; ++y)
 		{
 			for (std::size_t x = halfKernel; x < effectiveWidth; ++x)
@@ -90,13 +90,13 @@ namespace vl::filters
 			fmt::println("Invalid size of median filter: {}, filter should have odd size", size);
 			return;
 		}
-		if (image.width <= size || image.height <= size)
+		if (image.width() <= size || image.height() <= size)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, size, size);
+				image.width(), image.height(), size, size);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
@@ -106,8 +106,8 @@ namespace vl::filters
 		const std::size_t valuesCount = impl::get_mask_pixels_count(mask);
 
 		const std::size_t halfSize{size / 2};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
 		const vl::Image imageCopy{image};
 		std::vector<byte> values(valuesCount, 0);
@@ -135,33 +135,24 @@ namespace vl::filters
 			fmt::println("Invalid size of truncated median filter: {}, filter should have odd size", size);
 			return;
 		}
-		if (image.width <= size || image.height <= size)
+		if (image.width() <= size || image.height() <= size)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, size, size);
+				image.width(), image.height(), size, size);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
 		}
 
-		std::vector<bool> mask;
-		switch (shapeToUse)
-		{
-			case Shape::Rectangle:
-				mask.resize(size * size, true);
-				break;
-			case Shape::Octagon:
-				mask = impl::generate_octagon_mask(size);
-				break;
-		}
+		std::vector<bool> mask {impl::create_mask(size, shapeToUse)};
 		const std::size_t valuesCount = std::count(begin(mask), end(mask), true);
 
 		const std::size_t halfSize{size / 2};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
 		const vl::Image imageCopy{image};
 		std::vector<byte> values(valuesCount, 0);
@@ -220,21 +211,21 @@ namespace vl::filters
 			fmt::println("Invalid size of hybrid median filter: {}, filter should have odd size", size);
 			return;
 		}
-		if (image.width <= size || image.height <= size)
+		if (image.width() <= size || image.height() <= size)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, size, size);
+				image.width(), image.height(), size, size);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
 		}
 
 		const std::size_t halfSize{size / 2};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
 
 		const Image copy{image};
@@ -277,21 +268,21 @@ namespace vl::filters
 			fmt::println("Invalid size of erosion filter: {}, filter should have odd size", size);
 			return;
 		}
-		if (image.width <= size || image.height <= size)
+		if (image.width() <= size || image.height() <= size)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, size, size);
+				image.width(), image.height(), size, size);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
 		}
 
 		const std::size_t halfSize{size / 2};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
 		const auto mask{impl::create_mask(size, shape)};
 		const Image copy{image};
@@ -317,21 +308,21 @@ namespace vl::filters
 			fmt::println("Invalid size of dilation filter: {}, filter should have odd size", size);
 			return;
 		}
-		if (image.width <= size || image.height <= size)
+		if (image.width() <= size || image.height() <= size)
 		{
 			fmt::println("Invalid image size: {}x{} to kernel size: {}x{}",
-				image.width, image.height, size, size);
+				image.width(), image.height(), size, size);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
 		}
 
 		const std::size_t halfSize{size / 2};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
 		const auto mask{impl::create_mask(size, shape)};
 		const Image copy{image};
@@ -363,46 +354,97 @@ namespace vl::filters
 			return;
 		}
 
-		if (image.width <= outterRadius || image.height <= outterRadius)
+		if (image.width() <= outterRadius || image.height() <= outterRadius)
 		{
 			fmt::println("Invalid image size: {}x{} to outter size: {}",
-				image.width, image.height, outterRadius);
+				image.width(), image.height(), outterRadius);
 			return;
 		}
-		if (image.format != PixelFormat::Grayscale8)
+		if (image.format() != PixelFormat::Grayscale8)
 		{
 			fmt::println("Unsupported image format");
 			return;
 		}
 
+		const std::size_t halfSize{(std::size_t)outterRadius / 2};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
+
+		const auto innerMask{impl::create_mask(outterRadius, innerRadius, Shape::Circle)};
+		
+		const Image original{image};
+
+		for (std::size_t y = halfSize; y < effectiveHeight; ++y)
+			for (std::size_t x = halfSize; x < effectiveWidth; ++x)
+			{
+				int maxOutter = -1;
+				int maxInner = -1;
+
+				for (std::size_t i = 0; i < outterRadius; ++i)
+					for (std::size_t j = 0; j < outterRadius; ++j)
+					{
+						if (innerMask[i * outterRadius + j])
+							maxInner = std::max((int)original[x - halfSize + i, y - halfSize + j], maxInner);
+						else
+							maxOutter = std::max((int)original[x - halfSize + i, y - halfSize + j], maxOutter);
+					}
+
+				image[x, y] = std::abs(maxOutter - maxInner) >= threshold ? original[x, y] : !dark * 255;
+			}
+	}
+
+	void rolling_ball(Image &image, int innerRadius, int outterRadius, std::size_t threshold, bool dark)
+	{
+		if (innerRadius % 2 == 0)
+		{
+			fmt::println("Invalid inner radius of rolling ball filter: {}, filter should have odd size", innerRadius);
+			return;
+		}
+		if (outterRadius % 2 == 0)
+		{
+			fmt::println("Outter inner radius of rolling ball filter: {}, filter should have odd size", outterRadius);
+			return;
+		}
+
+		if (image.width() <= outterRadius || image.height() <= outterRadius)
+		{
+			fmt::println("Invalid image size: {}x{} to outter size: {}",
+				image.width(), image.height(), outterRadius);
+			return;
+		}
+		if (image.format() != PixelFormat::Grayscale8)
+		{
+			fmt::println("Unsupported image format");
+			return;
+		}
+
+		const auto innerMask{impl::create_mask(outterRadius, innerRadius, Shape::Circle)};
+
 		const int regionSize{outterRadius * 2};
 		const int halfSize{outterRadius};
-		const int powInnerRadius{innerRadius * innerRadius};
-		const std::size_t effectiveWidth{image.width - halfSize};
-		const std::size_t effectiveHeight{image.height - halfSize};
+		const std::size_t effectiveWidth{image.width() - halfSize};
+		const std::size_t effectiveHeight{image.height() - halfSize};
 
-		byte innerMax{};
-		byte outterMax{};
+		int innerMin;
+		int outterMin;
 		const Image copy{image};
 		for (std::size_t row = halfSize; row < effectiveHeight; ++row)
 		{
 			for (std::size_t col = halfSize; col < effectiveWidth; ++col)
 			{
-				innerMax = 0;
-				outterMax = 0;
+				innerMin = std::numeric_limits<byte>::max();
+				outterMin = std::numeric_limits<byte>::max();
+
 				for (std::size_t regionRow = 0; regionRow < regionSize; ++regionRow)
-				{
 					for (std::size_t regionCol = 0; regionCol < regionSize; ++regionCol)
 					{
-						if (std::pow(halfSize - regionRow, 2) + std::pow(halfSize - regionCol, 2) < powInnerRadius)
-							innerMax = std::max(copy[col - halfSize + regionCol, row - halfSize + regionRow], innerMax);
+						if (innerMask[regionRow * outterRadius + regionCol])
+							innerMin = std::min((int)copy[col - halfSize + regionCol, row - halfSize + regionRow], innerMin);
 						else
-							outterMax = std::max(copy[col - halfSize + regionCol, row - halfSize + regionRow], outterMax);
+							outterMin = std::min((int)copy[col - halfSize + regionCol, row - halfSize + regionRow], outterMin);
 					}
-				}
 
-				if ((std::size_t)innerMax < (std::size_t)outterMax + threshold)
-					image[col, row] = (byte)!dark * 254;
+				image[col, row] = std::abs(innerMin - outterMin) > threshold ? image[col, row] : !dark * 255;
 			}
 		}
 	}
@@ -411,14 +453,17 @@ namespace vl::filters
 	{
 		std::vector<bool> create_mask(std::size_t size, Shape shape)
 		{
+			return create_mask(size, size, shape);
+		}
+
+		std::vector<bool> create_mask(std::size_t size, std::size_t shapeSize, Shape shape)
+		{
+			assert (shapeSize <= size);
 			switch (shape)
 			{
-				case Shape::Rectangle:
-					return std::vector<bool>(size, true);
-				case Shape::Circle:
-					return impl::generate_circle_mask(size);
-				case Shape::Octagon:
-					return generate_octagon_mask(size);
+				case Shape::Rectangle: return generate_rectangle_mask(size, shapeSize);
+				case Shape::Circle: return impl::generate_circle_mask(size, shapeSize);
+				case Shape::Octagon: return generate_octagon_mask(size, shapeSize);
 			}
 			return {};
 		}
@@ -428,37 +473,50 @@ namespace vl::filters
 			return std::ranges::count(mask, true);
 		}
 
-		std::vector<bool> generate_octagon_mask(std::size_t size)
+		std::vector<bool> generate_rectangle_mask(std::size_t size, std::size_t shapeSize)
 		{
-			const std::size_t emptinessSizeSize = std::round(size / 3.);
-			assert(emptinessSizeSize * 2 < size);
-
-			const std::size_t sideSize = size - emptinessSizeSize * 2;
-
-			const std::size_t remainingEmptinessIndex{size - emptinessSizeSize - 1};
 			std::vector<bool> mask(size * size);
-			for (std::size_t y = 0; y < size; ++y)
-			{
-				for (std::size_t x = 0; x < size; ++x)
-				{
-					mask[y * size + x] = (x < emptinessSizeSize && y < (emptinessSizeSize - x))
-						|| (x >= remainingEmptinessIndex && y < x - remainingEmptinessIndex)
-						|| (x < emptinessSizeSize && y > (remainingEmptinessIndex + x))
-						|| (x >= remainingEmptinessIndex && y > (size - (x - remainingEmptinessIndex) - 1));
-				}
-			}
+			const std::size_t displacement{(size - shapeSize) / 2};
+
+			for (std::size_t y = 0; y < shapeSize; ++y)
+				for (std::size_t x = 0; x < shapeSize; ++x)
+					mask[(y + displacement) * size + x + displacement] = 1;
 
 			return mask;
 		}
 
-		std::vector<bool> generate_circle_mask(std::size_t size)
+		std::vector<bool> generate_octagon_mask(std::size_t size, std::size_t shapeSize)
+		{
+			const std::size_t emptinessSize = std::round(shapeSize / 3.);
+			assert(emptinessSize * 2 < size);
+
+			const std::size_t sideSize = shapeSize - emptinessSize * 2;
+
+			const std::size_t remainingEmptinessIndex{shapeSize - emptinessSize - 1};
+			std::vector<bool> mask(size * size);
+			const std::size_t displacement{(size - shapeSize) / 2};
+			for (std::size_t y = 0; y < shapeSize; ++y)
+				for (std::size_t x = 0; x < shapeSize; ++x)
+				{
+					mask[(y + displacement) * size + x + displacement] = (x < emptinessSize && y < (emptinessSize - x))
+						|| (x >= remainingEmptinessIndex && y < x - remainingEmptinessIndex)
+						|| (x < emptinessSize && y > (remainingEmptinessIndex + x))
+						|| (x >= remainingEmptinessIndex && y > (shapeSize - (x - remainingEmptinessIndex) - 1));
+				}
+
+			return mask;
+		}
+
+		std::vector<bool> generate_circle_mask(std::size_t size, std::size_t shapeSize)
 		{
 			std::vector<bool> mask(size * size);
+			const std::size_t displacement{(size - shapeSize) / 2};
 
-			const std::size_t halfSize = size / 2;
-			for (std::size_t i = 0; i < size; ++i)
-				for (std::size_t j = 0; j < size; ++j)
-					mask[i * size + j] = halfSize >= (std::size_t)std::sqrt(std::pow((i - halfSize), 2) + std::pow((j - halfSize), 2));
+			const std::size_t halfSize = (shapeSize / 2) * (shapeSize / 2);
+			for (std::size_t i = 0; i < shapeSize; ++i)
+				for (std::size_t j = 0; j < shapeSize; ++j)
+					mask[(i + displacement) * size + j + displacement] =
+						halfSize >= std::pow((i - halfSize), 2) + std::pow((j - halfSize), 2);
 
 			return mask;
 		}

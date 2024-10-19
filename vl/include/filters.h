@@ -27,13 +27,16 @@ namespace vl::filters
 	void dilation(Image &image, Shape shape, std::size_t size);
 
 	void top_hat(Image &image, int innerRadius, int outterRadius, std::size_t threshold, bool dark=true);
+	void rolling_ball(Image &image, int innerRadius, int outterRadius, std::size_t threshold, bool dark=true);
 
 	namespace impl
 	{
 		std::vector<bool> create_mask(std::size_t size, Shape shape);
+		std::vector<bool> create_mask(std::size_t size, std::size_t shapeSize, Shape shape);
 		std::size_t get_mask_pixels_count(const std::vector<bool> &mask);
 
-		std::vector<bool> generate_octagon_mask(std::size_t size);
-		std::vector<bool> generate_circle_mask(std::size_t size);
+		std::vector<bool> generate_rectangle_mask(std::size_t size, std::size_t shapeSize);
+		std::vector<bool> generate_octagon_mask(std::size_t size, std::size_t shapeSize);
+		std::vector<bool> generate_circle_mask(std::size_t size, std::size_t shapeSize);
 	}
 }

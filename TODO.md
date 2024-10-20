@@ -5,7 +5,7 @@
 - [x] Hybrid median
 
 - [x] Top hat filter
-- [ ] Rolling ball filter
+- [x] Rolling ball filter
 - [ ] Kuwabara filter
 - [ ] Maximum likelihood filter
 - [ ] Laplacian filter

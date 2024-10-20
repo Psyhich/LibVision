@@ -114,16 +114,16 @@ namespace vl::ImageIO
 		int colorType{png_get_color_type(infoStructPair.png_ptr, infoStructPair.info_ptr)};
 		int bitDepth{png_get_bit_depth(infoStructPair.png_ptr, infoStructPair.info_ptr)};
 
-		if (colorType == PNG_COLOR_TYPE_PALETTE)
+		if ((colorType & PNG_COLOR_TYPE_PALETTE) == PNG_COLOR_TYPE_PALETTE)
 			png_set_palette_to_rgb(infoStructPair.png_ptr);
 
-		if (colorType & PNG_COLOR_MASK_ALPHA)
+		if ((colorType & PNG_COLOR_MASK_ALPHA) == PNG_COLOR_MASK_ALPHA)
 			png_set_strip_alpha(infoStructPair.png_ptr);
 
-		if (colorType == PNG_COLOR_TYPE_RGB)
+		if ((colorType & PNG_COLOR_TYPE_RGB) == PNG_COLOR_TYPE_RGB)
 			png_set_rgb_to_gray(infoStructPair.png_ptr, 1, -1, -1);
 
-		if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+		if ((colorType & PNG_COLOR_TYPE_GRAY) == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
 			png_set_expand_gray_1_2_4_to_8(infoStructPair.png_ptr);
 
 		png_read_update_info(infoStructPair.png_ptr, infoStructPair.info_ptr);
@@ -139,9 +139,7 @@ namespace vl::ImageIO
 		std::vector<byte *> rows(height);
 		rows[0] = &bytes[0];
 		for (std::size_t i = 1; i < height; ++i)
-		{
 			rows[i] = rows[i - 1] + rowBytes;
-		}
 
 		png_read_image(infoStructPair.png_ptr, rows.data());
 
